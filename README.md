@@ -1,36 +1,6 @@
 Paper: M. Alawida, M. Menber, W. H. Alshoura, R. Almajed, S. Almuhammadi, "AEX-128: A Key-Dependent Finite-State SPN-ARX Hybrid Block Cipher", IEEE Access, 2026, https://doi.org/10.1109/ACCESS.2026.3730739
 
-# aex128-milp-reproduction
 
-Independent, from-scratch reproduction of the MILP active-S-box analysis of
-AEX-128 (Section IV, Table 10 of the paper) by the paper's second author. The
-paper's Java implementation and the co-author's MILP code were not used. The
-target numbers were known in advance and are quoted below for comparison only;
-nothing in this repository takes them as input.
-
-## What the paper claims
-
-Table 10 of the paper, "MILP-based active S-box analysis across all
-3^10 = 59,049 FSM transition-label sequences":
-
-| Metric | Active S-boxes |
-|---|---|
-| Minimum | 36 |
-| Average | 87.17 |
-| Median | 85 |
-| Maximum | 133 |
-
-The paper describes the model as follows (Section IV, "Resistance to
-Differential and Linear Cryptanalysis"): "the MILP analysis exhaustively
-considers all 3^10 = 59,049 possible transition-label sequences. Each
-transition-label sequence determines a 20-step FSM traversal from the fixed
-initial state. For each resulting execution path, the MILP model minimizes the
-number of active S-boxes under the specified propagation constraints. To obtain
-a conservative bound, the MILP model captures the diffusion properties of the
-SPN components while treating the ARX layer as transparent. Specifically,
-differences and linear masks are allowed to propagate through the ARX layer
-without an associated probability or correlation penalty." From the minimum it
-derives the single-characteristic bound (2^-6)^36 = 2^-216.
 
 ## What this repository contains
 
@@ -43,8 +13,7 @@ derives the single-characteristic bound (2^-6)^36 = 2^-216.
 | `verify_dp.py` | solver-free exact recomputation of the minima by dynamic programming (cross-check) |
 | `tests/` | unit tests for all of the above, including hand-verifiable miniature paths |
 
-## The cipher facts the model relies on (from the paper)
-
+## The cipher facts the model relies on 
 * 128-bit block viewed as a 4 x 4 byte matrix in **column-major order**
   (Section III-D.2). This repository indexes bytes as `i = 4*col + row`, so
   bytes 0..3 form column 0. ShiftRows rotates row r left by r positions
@@ -139,19 +108,7 @@ Verification built into the code:
   against the solver's objective; the tests additionally verify that the
   returned patterns satisfy every per-step constraint.
 
-## Differences and open questions
 
-**1. Assumptions in the brief that did not hold.** "Any solver finishes in
-milliseconds" is true for HiGHS on the deduplicated sweep (735 s for 12,836
-models on 8 workers) but false for the CBC binary bundled with PuLP, which did
-not finish the path (SB, SR, MC, ARX) x 5 within 150 s. The rule "same label
-for both steps of a round" restricts round-start states to S0 and S2, so the
-plain AES order SubBytes-ShiftRows-MixColumns-SubBytes never occurs without an
-ARX step in between; the sequence (SB, SR, MC, ARX) x 5 does occur (labels all
-0) and gives the 5-round AES bound of 26.
-
-**2. Out of scope, as in the brief:** no linear-mask model, no ARX probability
-model, no bound tightening.
 
 ## How to run
 
